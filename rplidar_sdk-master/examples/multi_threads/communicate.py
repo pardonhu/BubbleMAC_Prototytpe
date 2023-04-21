@@ -13,6 +13,7 @@ MAX_SPEED = 6.0
 ACC = 0.4
 DEC = 0.2
 DEC_RO = 0.8
+origin_op = 'A'
 DELTA_TIME = 0.1
 TAO = 1
 front_dist = 3
@@ -33,15 +34,14 @@ def get_vel(vel_l, dist):
     dist = max(dist - 0.5, 0.0)
     vel_f = vel_cur
     vel_l = max(vel_l, 0)
-    vel_new = min(MAX_SPEED, vel_f + ACC * DELTA_TIME, \
-        -DEC*DEC_RO*(TAO+DELTA_TIME) + math.sqrt((DEC*DEC_RO*(TAO+DELTA_TIME))**2\
-            + DEC_RO*vel_l**2 + 2*DEC*DEC_RO*dist))
+    v3 = -DEC*DEC_RO*(TAO+DELTA_TIME) + math.sqrt((DEC*DEC_RO*(TAO+DELTA_TIME))**2\
+            + DEC_RO*vel_l**2 + 2*DEC*DEC_RO*dist)
+    vel_new = min(MAX_SPEED, vel_f + ACC * DELTA_TIME, v3)
     # if vel_new < 0.1:
     #     vel_new = 0
-    vel_new = min(max(vel_new, 0), 0.9)
-    print('3 vels: ', MAX_SPEED, vel_f + ACC * DELTA_TIME, \
-        -DEC*TAO + math.sqrt((DEC*TAO)**2 + vel_l**2 + 2*DEC*dist))
-    vel_info = f'vel_info: {vel_f + ACC * DELTA_TIME} {-DEC*TAO + math.sqrt((DEC*TAO)**2 + vel_l**2 + 2*DEC*dist)} {dist} {vel_new} {vel_f} {vel_l} {vel_cur}\n'
+    vel_new = max(vel_new, 0)
+    print('3 vels: ', MAX_SPEED, vel_f + ACC * DELTA_TIME, v3)
+    vel_info = f'vel_info: {vel_f + ACC * DELTA_TIME} {v3} {dist} {vel_new} {vel_f} {vel_l} {vel_cur}\n'
                 
     vel_log.write(vel_info)
     vel_log.flush()
@@ -166,6 +166,8 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
     global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag, tx_dist
     missed_packet_num = 0
     continuous_receive_num = 0
+    count=DWritePort(ser_stm, origin_op)
+    print(f"dist:{front_dist} 向STM32 写入 {origin_op} ")
     while(1):
         packet_flag = False
         # print('---begin reading lidar---')
@@ -241,8 +243,8 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                     print(f"dist:{front_dist} 向STM32 写入 pwm_vel {pwm_vel}, count={count} ")
                 # print('---end reading lidar---')
                 else:
-                    count=DWritePort(ser_stm,'a')
-                    print(f"dist:{front_dist} 向STM32 写入 a ")
+                    count=DWritePort(ser_stm, origin_op)
+                    print(f"dist:{front_dist} 向STM32 写入 {origin_op} ")
             else:
                 comm_radius = get_comm_radius(rel_dist)
                 tx_dist = rel_dist

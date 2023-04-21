@@ -68,18 +68,26 @@ def GPS_read(ser):
                                     if ser.inWaiting():
                                         if ser.read(1) == b'A':
                                             utctime = ser.read(11) # 读取串口数据
-                                            gps_time_list.append(utctime) #记录gps报告时间
-                                            pc_time_list.append(time.time()) #记录电脑时间
-                                            print('utctime:', format_time(utctime))
+                                            # print('utc:')
+                                            # print(utctime)
+                                            
+                                            if(utctime[8] == 48):
+                                                print('test:')
+                                                print(utctime[8])
+                                                
+                                                gps_time_list.append(utctime) #记录gps报告时间
+                                                pc_time_list.append(time.time()) #记录电脑时间
+                                                print('utctime:', format_time(utctime))
 
-                                            str1 = str(format_time(utctime))     #格式化GPS报告的时间
-                                            # str2 = "2022-04-17 12:00:00"
+                                                str1 = str(format_time(utctime))     #格式化GPS报告的时间
+                                                # str2 = "2022-04-17 12:00:00"
 
-                                            print('set clock:', str1)
-                                            #print('2:', str2)
-                                            output = subprocess.check_output(["date","-s", str1])  #设置时间
+                                                print('set clock:', str1)
+                                                #print('2:', str2)
+                                                output = subprocess.check_output(["date","-s", str1])  #设置时间
                                             # print(output.decode())
-                                            return True
+                                                return True
+
     return False
 
 def main(Ser_name = "/dev/a-gps", period = 300):
@@ -99,7 +107,10 @@ def main(Ser_name = "/dev/a-gps", period = 300):
         
         try:
             if(GPS_read(ser)):
-                time.sleep(period)
+                print('good')
+                # time.sleep(period)
+                time.sleep(0)
+
         except Exception as e:
             print(time.strftime("%H:%M:%S"), end=' ')
             print('GPS Exceptions!', e)
