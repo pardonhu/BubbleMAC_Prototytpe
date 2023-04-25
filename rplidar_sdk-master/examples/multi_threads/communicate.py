@@ -11,6 +11,7 @@ BOOL=True  #读取标志位
 MAX_SPEED = 6.0
 ACC = 0.4
 DEC = 0.2
+DEC_RO = 0.8
 DELTA_TIME = 0.1
 TAO = 1
 front_dist = 3
@@ -29,7 +30,8 @@ def get_vel(vel_l, dist):
     vel_f = vel_cur
     vel_l = max(vel_l, 0)
     vel_new = min(MAX_SPEED, vel_f + ACC * DELTA_TIME, \
-        -DEC*TAO + math.sqrt((DEC*TAO)**2 + vel_l**2 + 2*DEC*dist))
+        -DEC*DEC_RO*(TAO+DELTA_TIME) + math.sqrt((DEC*DEC_RO*(TAO+DELTA_TIME))**2\
+            + DEC_RO*vel_l**2 + 2*DEC*DEC_RO*dist))
     # if vel_new < 0.1:
     #     vel_new = 0
     vel_new = min(max(vel_new, 0), 0.9)
