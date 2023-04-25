@@ -50,6 +50,7 @@ import os
 import numpy as np
 import threading
 from gnuradio import qtgui
+home_dir = os.environ['HOME']
 
 class wifi_trx(gr.top_block, Qt.QWidget):
 
@@ -458,7 +459,7 @@ class wifi_trx(gr.top_block, Qt.QWidget):
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
         self.blocks_moving_average_xx_0 = blocks.moving_average_ff(window_size  + 16, 1, 4000, 1)
         # self.blocks_message_strobe_0_0 = blocks.message_strobe(pmt.intern("".join("0" for i in range(pdu_length))), interval)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, '/home/hu/Desktop/memory_file_sys/wifi.pcap', False)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, f'{home_dir}//Desktop/memory_file_sys/wifi.pcap', False)
         self.blocks_file_sink_0.set_unbuffered(True)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_delay_0_0 = blocks.delay(gr.sizeof_gr_complex*1, 16)
@@ -655,7 +656,7 @@ def packet_transmit(tb):
     slot = set_slot()
     slot_time = 0.01 * slot
     cur_time = time.strftime("%d-%H%M%S")
-    packet_log = open(f'/home/hu/Desktop/memory_file_sys/packet_log/{cur_time}.txt', 'w')
+    packet_log = open(f'{home_dir}//Desktop/memory_file_sys/packet_log/{cur_time}.txt', 'w')
     try:
         while(packet_num < 1000):
             time.sleep(slot_time)

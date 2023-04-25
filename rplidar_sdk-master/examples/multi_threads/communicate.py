@@ -22,7 +22,9 @@ slot = 0
 queue_flag = False
 prev_seq_num, cur_seq_num = -1, 0
 received_num = 0
-vel_log = open('/home/hu/Desktop/memory_file_sys/vel_log.txt', 'w')
+import os
+home_dir = os.environ['HOME']
+vel_log = open(f'{home_dir}//Desktop/memory_file_sys/vel_log.txt', 'w')
 
 def get_vel(vel_l, dist):
     # dist /= 1000
@@ -155,10 +157,10 @@ def DReadPort():
     return str
 
 import os
+home_dir = os.environ['HOME']
 
-
-def read_latest_packet(ser_stm, role, wifi_path='/home/hu/Desktop/memory_file_sys/wifi.pcap', \
-                       lidar_path = '/home/hu/Desktop/memory_file_sys/lidar_data.txt', packet_len=50):
+def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file_sys/wifi.pcap', \
+                       lidar_path = f'{home_dir}//Desktop/memory_file_sys/lidar_data.txt', packet_len=50):
     global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag
     missed_packet_num = 0
     while(1):
