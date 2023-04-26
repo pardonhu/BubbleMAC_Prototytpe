@@ -65,10 +65,11 @@ using namespace std;
 #define MAX_ANG 2000
 #define WINDOW_SIZE 30
 #define MAX_DATA_POINTS 1000
-#define PERIOD 100
+#define PERIOD 80
+#define PERIOD_LIMIT 1800
 #define AMBIGUITY_TH 1.8
 
-double LIMIT_DIST = 500.0;
+double LIMIT_DIST = 650.0;
 double error = 0.0;     // 偏差值
 double error_sum = 0.0; // 偏差值的累积和
 double error_diff = 0.0;// 偏差值的变化率
@@ -76,7 +77,7 @@ double prev_output = 0.0;
 double prev_error = 0.0;
 double prev_dist = 0.0;
 double cur_time = 0.0, prev_time = 0.0;
-double DEC_DIST = 1500.0;
+double DEC_DIST = 1600.0;
 
 bool check_target_angle(double ang){
     const double MIN_TARGET_ANGLE = 230.0, MAX_TARGET_ANGLE = 270.0;
@@ -88,7 +89,7 @@ bool check_front_angle(double ang){
 }
 
 void check_limit_dist(int frame_cnt){
-    if (frame_cnt % PERIOD == 0) LIMIT_DIST = 1500 - LIMIT_DIST;
+    if (frame_cnt % PERIOD == 0) LIMIT_DIST = PERIOD_LIMIT - LIMIT_DIST;
 }
 
 double get_vel_relative(double front_dist, double ratio=0.1){
@@ -452,7 +453,7 @@ int main(int argc, const char * argv[]) {
                 if (history_dist.size() >= 1){
                     double his_avg = std::accumulate(history_dist.begin(), history_dist.end(), 0.0) / history_dist.size();
                     logfile << "Before avg: " << target_dist <<  " his_avg" << his_avg<< std::endl;
-                    if (abs(target_dist - LIMIT_DIST) >= 200){
+                    if (abs(target_dist - LIMIT_DIST) >= 400){
                         if (target_dist > AMBIGUITY_TH * his_avg) logfile << "foo!" << std::endl;
                         target_dist = (target_dist > AMBIGUITY_TH * his_avg)?
                             his_avg : target_dist; // 默认window size为10

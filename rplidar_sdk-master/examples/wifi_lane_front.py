@@ -680,8 +680,8 @@ def packet_transmit(tb):
         
 def main(top_block_cls=wifi_trx, options=None):
     #Appply GPS utc time to set system clock
-    gps_serial_path, stm_serial_path ='/dev/ttyUSB2', '/dev/ttyUSB1'
-    set_clock(gps_serial_path)
+    gps_serial_path, stm_serial_path ='/dev/a-gps', '/dev/a-stm'
+    # set_clock(gps_serial_path)
     time.sleep(2.05)
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')
