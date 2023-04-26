@@ -43,6 +43,7 @@ import time
 from gnuradio.qtgui import Range, RangeWidget
 from wifi_phy_hier import wifi_phy_hier  # grc-generated hier_block
 import foo
+import numpy as np
 import ieee802_11
 
 from multi_threads import communicate, GPS
@@ -90,11 +91,11 @@ class wifi_trx(gr.top_block, Qt.QWidget):
         ##################################################
         self.window_size = window_size = 48
         self.tx_gain = tx_gain = 1
-        self.tx_freq = tx_freq = 2457000000
+        self.tx_freq = tx_freq = 58900000
         self.sync_length = sync_length = 320
         self.samp_rate_0 = samp_rate_0 = 10e6
         self.samp_rate = samp_rate = 10e6
-        self.rx_gain = rx_gain = 0.44
+        self.rx_gain = rx_gain = 0.2
         self.rx_freq = rx_freq = 5890000000
         self.pdu_length = pdu_length = 50
         self.out_buf_size = out_buf_size = 960000
@@ -459,7 +460,7 @@ class wifi_trx(gr.top_block, Qt.QWidget):
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
         self.blocks_moving_average_xx_0 = blocks.moving_average_ff(window_size  + 16, 1, 4000, 1)
         # self.blocks_message_strobe_0_0 = blocks.message_strobe(pmt.intern("".join("0" for i in range(pdu_length))), interval)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, f'{home_dir}//Desktop/memory_file_sys/wifi.pcap', True)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, f'{home_dir}/Desktop/memory_file_sys/wifi.pcap', False)
         self.blocks_file_sink_0.set_unbuffered(True)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_delay_0_0 = blocks.delay(gr.sizeof_gr_complex*1, 16)
@@ -630,13 +631,14 @@ class wifi_trx(gr.top_block, Qt.QWidget):
         self.chan_est = chan_est
         self._chan_est_callback(self.chan_est)
 
-
 def power_control(dist):
-    a, b, c = -0.0762, 0.5167, 0.0893
+    # return 0.5
+    dist += 0.1
+    a, b, c = -0.03, 0.2193, 0.4807
     tx_gain = a * dist**2 + b * dist + c
     tx_gain = min(max(tx_gain, 0), 1)
-    # return 0.5
     return tx_gain
+
 
 def set_clock(gps_serial_path, period = 300):
     gps_read = threading.Thread(target=GPS.main, args=(gps_serial_path, period))

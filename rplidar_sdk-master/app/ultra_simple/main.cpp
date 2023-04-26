@@ -60,15 +60,15 @@ static inline void delay(sl_word_size_t ms){
 
 using namespace sl;
 using namespace std;
+#define LIMIT_DIST 500
 #define BRAKE_DIST 500
 
 #define MAX_ANG 2000
 #define WINDOW_SIZE 30
 #define MAX_DATA_POINTS 1000
-#define PERIOD 200
+
 #define AMBIGUITY_TH 1.8
 
-double LIMIT_DIST = 500.0;
 double error = 0.0;     // 偏差值
 double error_sum = 0.0; // 偏差值的累积和
 double error_diff = 0.0;// 偏差值的变化率
@@ -87,9 +87,6 @@ bool check_front_angle(double ang){
     return ang <= MAX_FRONT_ANGLE && ang >= MIN_FRONT_ANGLE;
 }
 
-void check_limit_dist(int frame_cnt){
-    if (frame_cnt % PERIOD == 0) LIMIT_DIST = 1500 - LIMIT_DIST;
-}
 
 double get_vel_relative(double front_dist, double ratio=0.1){
     double ret = (front_dist - prev_dist) / (cur_time - prev_time);
@@ -132,6 +129,11 @@ double distance(Point p1, Point p2) {
     return std::sqrt(pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2));
 }
 
+// 判断一个点是否在圆锥形空间内
+bool inCone(Point p) {
+    double angle = std::atan2(p.y, p.x) * 180 / M_PI;  // 计算点p的极角，单位为度
+    return check_front_angle(angle);
+}
 Point theta2point(double theta, double dist){
     Point ret;
     ret.x = dist * std::cos(theta / 360 * 3.146 * 2);
@@ -149,7 +151,7 @@ Point cluster(std::vector<Point> points) {
 }
 
 double check_front_distance(const std::vector<Point>& points) {
-
+    // 过滤出在圆锥形空间内的点
 
     // 聚类算法，返回聚类中心坐标
     Point center = cluster(points);
@@ -226,7 +228,7 @@ int main(int argc, const char * argv[]) {
     sl_u32         baudrateArray[2] = {115200, 256000};
     sl_result     op_result;
 	int          opt_channel_type = CHANNEL_TYPE_SERIALPORT;
-    int frame_cnt = 1;
+
 	bool useArgcBaudrate = false;
 
     IChannel* _channel;
@@ -283,7 +285,7 @@ int main(int argc, const char * argv[]) {
 #elif __APPLE__
 		opt_channel_param_first = "/dev/tty.SLAB_USBtoUART";
 #else
-		opt_channel_param_first = "/dev/ttyUSB0";
+		opt_channel_param_first = "/dev/a-lidar";
 #endif
 		}
 	}
@@ -299,7 +301,7 @@ int main(int argc, const char * argv[]) {
 
     sl_lidar_response_device_info_t devinfo;
     bool connectSuccess = false;
-    
+
     if(opt_channel_type == CHANNEL_TYPE_SERIALPORT){
         if(useArgcBaudrate){
             _channel = (*createSerialPortChannel(opt_channel_param_first, opt_channel_param_second));
@@ -398,14 +400,13 @@ int main(int argc, const char * argv[]) {
 
         op_result = drv->grabScanDataHq(nodes, count);
 
-        check_limit_dist(frame_cnt);
+        
         double output = 0;
-        double vel_front = 0, vel_rear = 0;
         std::vector<Point> front_points;
         // front_points.clear();
         if (SL_IS_OK(op_result)) {
             drv->ascendScanData(nodes, count);
-            // int frame_cnt = 1;
+            int frame_cnt = 0;
             int target_cnt = 0, front_cnt = 0;
             double target_dist = 0, front_dist = 0;
             
@@ -430,11 +431,11 @@ int main(int argc, const char * argv[]) {
                     front_points.emplace_back(p);
                 }
                 
-                // if(start_flag){
-                //     frame_cnt++;
-                //     int tmp = count;
-                //     printf("pos: %d, frame_cnt: %d, count: %d\n", pos, frame_cnt, tmp);
-                // } 
+                if(start_flag){
+                    frame_cnt++;
+                    int tmp = count;
+                    printf("pos: %d, frame_cnt: %d, count: %d\n", pos, frame_cnt, tmp);
+                } 
                 printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
                     start_flag ?" Start Frame ":"  ", 
                     theta,
@@ -487,11 +488,10 @@ int main(int argc, const char * argv[]) {
             logfile << "Frame Over:" << (double)target_dist << ' ' << (double)output << ' ' << vel_relative << ' ' << brake_flag << std::endl;
             outfile.flush();
             outfile.close();
-            printf("frame_cnt: %d, target_limit: %.01f", frame_cnt, LIMIT_DIST);
-            printf("--target dist=%0.2f, target_cnt=%d, output=%0.2f, front_dist=%0.2f, vel_relative=%0.2f, brake=%d----\n", 
+            printf("front_cnt: %d", front_cnt);
+            printf("----target dist=%0.2f, target_cnt=%d, output=%0.2f, front_dist=%0.2f, vel_relative=%0.2f, brake=%d----\n", 
                 target_dist, target_cnt, output, front_dist, vel_relative, brake_flag);
 
-            frame_cnt += 1;
         }
 
         if (ctrl_c_pressed){ 

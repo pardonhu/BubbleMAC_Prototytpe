@@ -94,7 +94,7 @@ class wifi_trx(gr.top_block, Qt.QWidget):
         self.sync_length = sync_length = 320
         self.samp_rate_0 = samp_rate_0 = 10e6
         self.samp_rate = samp_rate = 10e6
-        self.rx_gain = rx_gain = 0.4
+        self.rx_gain = rx_gain = 0.2
         self.rx_freq = rx_freq = 5890000000
         self.pdu_length = pdu_length = 50
         self.out_buf_size = out_buf_size = 960000
@@ -632,10 +632,10 @@ class wifi_trx(gr.top_block, Qt.QWidget):
 
 
 def power_control(dist):
-    # return 0.5
-    a, b, c = -0.03, 0.2193, 0.4807
+    a, b, c = -0.0762, 0.5167, 0.0893
     tx_gain = a * dist**2 + b * dist + c
     tx_gain = min(max(tx_gain, 0), 1)
+    # return 0.5
     return tx_gain
 
 def set_clock(gps_serial_path, period = 300):
@@ -646,31 +646,35 @@ def set_clock(gps_serial_path, period = 300):
 def set_slot():
     slot_num = 10
     if(communicate.queue_flag):
-        slot = 1
+        slot = 0
     else:
         slot = np.random.randint(1, slot_num - 1)
     return slot    
     
 def packet_transmit(tb):
     packet_num = 0
-    slot = set_slot()
-    slot_time = 0.01 * slot
+    
+    
     cur_time = time.strftime("%d-%H%M%S")
-    packet_log = open(f'{home_dir}//Desktop/memory_file_sys/packet_log/{cur_time}.txt', 'w')
+    packet_log = open(f'{home_dir}/Desktop/memory_file_sys/packet_log/{cur_time}.txt', 'w')
     try:
-        while(packet_num < 1000):
+        while(packet_num < 9000):
+            
+            slot = set_slot()
+            slot_time = 0.01 * slot
             time.sleep(slot_time)
-            tx_gain = power_control(communicate.front_dist)
+            tx_gain = power_control(communicate.tx_dist)
             tb.set_tx_gain(tx_gain)
             port = pmt.intern('app in')
             # msg = pmt.cons(pmt.PMT_NIL, pmt.make_u8vector(50,0x78))
             
-            msg = '  Front ' + str(packet_num).zfill(5) + ' ' + '{:.3f}'.format(communicate.front_dist) + ' ' + '{:.3f}'.format(communicate.vel_cur)
-            print(f'msg: {msg}')
-            msg = pmt.intern(msg)
+            origin_msg = '  Front ' + str(packet_num).zfill(5) + ' ' + '{:.3f}'.format(communicate.tx_dist) + ' ' + '{:.3f}'.format(communicate.vel_cur)
+            print(f'msg: {origin_msg}')
+            msg = pmt.intern(origin_msg)
             tb.ieee802_11_mac_0.to_basic_block()._post(port, msg)
             print(f'tx_gain: {tx_gain}, packet_num: {packet_num}')
-            packet_log.write(f'slot: {slot}, tx_gain: {tx_gain}, packet_num: {packet_num},' + msg + '\n')
+            packet_log.write(f'slot: {slot}, tx_gain: {tx_gain}, packet_num: {packet_num},' + origin_msg + '\n')
+            print(f'slot: {slot}, tx_gain: {tx_gain}, packet_num: {packet_num},' + origin_msg + '\n')
             packet_log.flush()
             packet_num += 1
             time.sleep(0.1 - slot_time)
@@ -680,9 +684,9 @@ def packet_transmit(tb):
         
 def main(top_block_cls=wifi_trx, options=None):
     #Appply GPS utc time to set system clock
-    gps_serial_path, stm_serial_path ='/dev/ttyUSB2', '/dev/ttyUSB1'
+    gps_serial_path, stm_serial_path ='/dev/a-gps', '/dev/a-stm'
     set_clock(gps_serial_path)
-    time.sleep(2.05)
+    # time.sleep(2.05)
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')
         Qt.QApplication.setGraphicsSystem(style)

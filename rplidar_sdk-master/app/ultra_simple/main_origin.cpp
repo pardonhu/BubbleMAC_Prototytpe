@@ -285,7 +285,7 @@ int main(int argc, const char * argv[]) {
 #elif __APPLE__
 		opt_channel_param_first = "/dev/tty.SLAB_USBtoUART";
 #else
-		opt_channel_param_first = "/dev/ttyUSB0";
+		opt_channel_param_first = "/dev/a-lidar";
 #endif
 		}
 	}

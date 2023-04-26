@@ -15,7 +15,8 @@ DEC_RO = 0.8
 DELTA_TIME = 0.1
 TAO = 1
 front_dist = 3
-rel_dist = 2
+rel_dist = 1
+tx_dist = 1.5
 vel_leader = 0.0
 vel_cur = 0.0
 slot = 0
@@ -24,7 +25,7 @@ prev_seq_num, cur_seq_num = -1, 0
 received_num = 0
 import os
 home_dir = os.environ['HOME']
-vel_log = open(f'{home_dir}//Desktop/memory_file_sys/vel_log.txt', 'w')
+vel_log = open(f'{home_dir}/Desktop/memory_file_sys/vel_log.txt', 'w')
 
 def get_vel(vel_l, dist):
     # dist /= 1000
@@ -161,7 +162,7 @@ home_dir = os.environ['HOME']
 
 def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file_sys/wifi.pcap', \
                        lidar_path = f'{home_dir}//Desktop/memory_file_sys/lidar_data.txt', packet_len=50):
-    global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag
+    global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag, tx_dist
     missed_packet_num = 0
     while(1):
         packet_flag = False
@@ -235,6 +236,7 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                 # if (packet_flag == True):
                 vel_leader = vel_ralative + vel_cur
                 # front_dist = rel_dist
+                tx_dist = front_dist
                 comm_radius = get_comm_radius(front_dist)
                 vel_new = get_vel(vel_leader, front_dist) # get vel_l by communication
                 # vel_new = get_vel(vel_ralative + vel_cur, front_dist) # get vel_l by lidar
@@ -257,8 +259,9 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                     print(f"dist:{front_dist} 向STM32 写入 a ")
             else:
                 comm_radius = get_comm_radius(rel_dist)
+                tx_dist = rel_dist
                 # print(comm_radius)
-                # vel_new = get_vel(vel_leader, front_dist) # get vel_l by communication
+                vel_new = get_vel(vel_leader, front_dist) # get vel_l by communication
                 # vel_new = get_vel(vel_ralative + vel_cur, front_dist) # get vel_l by lidar
                 # print(vel_new)
                 # pwm_vel = vel_to_pwm(vel_new)

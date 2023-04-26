@@ -82,23 +82,26 @@ def GPS_read(ser):
                                             return True
     return False
 
-def main(Ser_name = "/dev/ttyUSB0", period = 300):
+def main(Ser_name = "/dev/a-gps", period = 300):
     
     print("begin to set the clock!")
     Baudrate = 115200
 
     ser = serial.Serial(Ser_name, Baudrate)
-
+    
     if ser.isOpen():
+        
         print("GPS Serial Opened! Baudrate="+str(Baudrate))
     else:
         print("GPS Serial Open Failed!")
        
     while True: 
+        
         try:
             if(GPS_read(ser)):
                 time.sleep(period)
         except Exception as e:
+            print(time.strftime("%H:%M:%S"), end=' ')
             print('GPS Exceptions!', e)
             time.sleep(10)
         except KeyboardInterrupt:

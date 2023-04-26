@@ -94,7 +94,7 @@ class wifi_trx(gr.top_block, Qt.QWidget):
         self.sync_length = sync_length = 320
         self.samp_rate_0 = samp_rate_0 = 10e6
         self.samp_rate = samp_rate = 10e6
-        self.rx_gain = rx_gain = 0.4
+        self.rx_gain = rx_gain = 0.2
         self.rx_freq = rx_freq = 5890000000
         self.pdu_length = pdu_length = 50
         self.out_buf_size = out_buf_size = 960000

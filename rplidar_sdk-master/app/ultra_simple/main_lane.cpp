@@ -65,7 +65,7 @@ using namespace std;
 #define MAX_ANG 2000
 #define WINDOW_SIZE 30
 #define MAX_DATA_POINTS 1000
-#define PERIOD 200
+#define PERIOD 100
 #define AMBIGUITY_TH 1.8
 
 double LIMIT_DIST = 500.0;
