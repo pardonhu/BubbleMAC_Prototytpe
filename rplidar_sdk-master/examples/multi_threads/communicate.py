@@ -182,10 +182,11 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                 vel_ralative = float(info[2])
                 brake_flag = int(info[3])
                 B = struct.pack('f', ang)
+                xor_check = B[0] ^ B[1] ^ B[2] ^ B[3]
                 # print('tmp: ', type(ang), ang, 'B: ', B, B.hex())
-                count=DWritePort(ser_stm,'c'.encode('gbk')+B)
+                count=DWritePort(ser_stm,'c'.encode('gbk')+B+xor_check.to_bytes(1, 'big'))
                 
-                # print(f"向STM32 写入 转向系数 {ang}, count={count} ")
+                print(f"向STM32 写入 转向系数 {ang}, count={count} ")
                 
                 
             except Exception as e:
@@ -238,8 +239,9 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                 elif (front_dist < 3.0 and front_dist > 0.0):
                     # pwm_vel = 300
                     V = struct.pack('f', pwm_vel)
+                    xor_check = V[0] ^ V[1] ^ V[2] ^ V[3]
                     print('V: ', V, V.hex())
-                    count=DWritePort(ser_stm,'v'.encode('gbk')+V)
+                    count=DWritePort(ser_stm,'v'.encode('gbk')+V+xor_check.to_bytes(1, 'big'))
                     print(f"dist:{front_dist} 向STM32 写入 pwm_vel {pwm_vel}, count={count} ")
                 # print('---end reading lidar---')
                 else:
