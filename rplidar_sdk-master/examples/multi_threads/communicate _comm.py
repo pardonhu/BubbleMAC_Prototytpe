@@ -5,7 +5,6 @@ import math
 import struct
 import numpy as np
 from . import GPS
-cur_time = time.strftime("%d-%H%M%S")
 STRGLO="" #读取的数据
 OP="" #acc or dec
 BOOL=True  #读取标志位
@@ -26,7 +25,7 @@ prev_seq_num, cur_seq_num = -1, 0
 received_num = 0
 import os
 home_dir = os.environ['HOME']
-vel_log = open(f'{home_dir}/Desktop/memory_file_sys/vel_log/{cur_time}.txt', 'w')
+vel_log = open(f'{home_dir}/Desktop/memory_file_sys/vel_log.txt', 'w')
 
 def get_vel(vel_l, dist):
     # dist /= 1000
@@ -161,11 +160,10 @@ def DReadPort():
 import os
 home_dir = os.environ['HOME']
 
-def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file_sys/wifi_log/{cur_time}.pcap', \
+def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file_sys/wifi.pcap', \
                        lidar_path = f'{home_dir}//Desktop/memory_file_sys/lidar_data.txt', packet_len=50):
     global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag, tx_dist
     missed_packet_num = 0
-    continuous_receive_num = 0
     while(1):
         packet_flag = False
         # print('---begin reading lidar---')
@@ -191,25 +189,41 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
         # print('---begin reading pcap---')
         
         try:
-            
-            cur_seq_num += 1
-            # print(f'read from pcap {source_vel} {cur_seq_num}, {rel_dist}, {vel_leader}')
-            # print(f'cur_seq_num = {cur_seq_num} while prev_seq_num = {prev_seq_num}')
-            if (np.random.rand() < 0.8):
-                packet_flag = True
-                
-                received_num += 1
-                missed_packet_num == 0
-                continuous_receive_num += 1
-                if continuous_receive_num > 1:
-                    queue_flag = True
-                print(f'received packet num: {received_num}')
+            filesize = os.path.getsize(wifi_path)
+            if (filesize == 24):
+                print(' PCAP EMPTY!')
             else:
-                continuous_receive_num = 0
-                missed_packet_num += 1
-                if (missed_packet_num > 5):
-                    queue_flag = False
-            
+                with open(wifi_path, 'rb') as in_wifi:
+                
+                    in_wifi.seek(-24, os.SEEK_END)
+                    # while in_wifi.read(1) != b"\n":
+                    #     in_wifi.seek(-2, os.SEEK_CUR)
+                    l = in_wifi.readline()
+                    
+                    # print(l[-23:])
+                    packet_data = l[-23:].decode().strip()
+                    # print('read line : ', packet_data)
+                    in_wifi.close()
+                    
+                    packet_data = packet_data.split(' ')
+                    # print(packet_data, type(packet_data))
+                    source_vel = packet_data[0]
+                    cur_seq_num = int(packet_data[1])
+                    rel_dist = float(packet_data[2])
+                    vel_leader = float(packet_data[3])
+                    print(f'read from pcap {source_vel} {cur_seq_num}, {rel_dist}, {vel_leader}')
+                    # print(f'cur_seq_num = {cur_seq_num} while prev_seq_num = {prev_seq_num}')
+                    if (np.random.rand() < 0.8 and cur_seq_num != prev_seq_num):
+                        packet_flag = True
+                        queue_flag = True
+                        received_num += 1
+                        print(f'received packet num: {received_num}')
+                        prev_seq_num = cur_seq_num
+                    else:
+                        missed_packet_num += 1
+                        if (missed_packet_num > 5):
+                            queue_flag = False
+                    
         except Exception as e:
             print(f'---wifi error!--- {e}')
         # print('---end reading pcap---')
@@ -266,9 +280,9 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
             
         time.sleep(0.1)
 
-def ReadPcap(ser_stm, role, wifi_path):
+def ReadPcap(ser_stm, role = 'rear'):
     try:
-        threading.Thread(target=read_latest_packet, args=(ser_stm, role, wifi_path, )).start()
+        threading.Thread(target=read_latest_packet, args=(ser_stm, role, )).start()
     except Exception as e:
         print("---异常---: ", e)
 

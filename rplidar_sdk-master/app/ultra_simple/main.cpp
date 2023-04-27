@@ -79,7 +79,7 @@ double cur_time = 0.0, prev_time = 0.0;
 double DEC_DIST = 1500.0;
 
 bool check_target_angle(double ang){
-    const double MIN_TARGET_ANGLE = 90.0, MAX_TARGET_ANGLE = 130.0;
+    const double MIN_TARGET_ANGLE = 230.0, MAX_TARGET_ANGLE = 270.0;
     return ang <= MAX_TARGET_ANGLE && ang >= MIN_TARGET_ANGLE;
 }
 bool check_front_angle(double ang){
@@ -421,7 +421,7 @@ int main(int argc, const char * argv[]) {
                 
                 
                 if (qua != 0 && check_target_angle(theta)){
-                    target_dist += dist * (std::sin(theta / 360 * 3.1415926 * 2));
+                    target_dist += dist * std::abs(std::sin(theta / 360 * 3.1415926 * 2));
                     target_cnt++;
                 }
                 else if (qua != 0 && check_front_angle(theta)){
@@ -460,7 +460,7 @@ int main(int argc, const char * argv[]) {
                     }
                 }
                 history_dist.emplace_back(target_dist);
-                output = -PID_control(target_dist) / 2;
+                output = PID_control(target_dist) / 2;
                 
                 
 
