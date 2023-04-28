@@ -67,6 +67,7 @@ using namespace std;
 #define WINDOW_SIZE 30
 #define MAX_DATA_POINTS 1000
 #define ST_COE 4
+#define ST_OFFSET 0.05
 #define AMBIGUITY_TH 1.8
 
 double error = 0.0;     // 偏差值
@@ -460,7 +461,7 @@ int main(int argc, const char * argv[]) {
                 //     }
                 // }
                 // history_dist.emplace_back(target_dist);
-                output = -PID_control(target_dist) / ST_COE;
+                output = -PID_control(target_dist) / ST_COE + ST_OFFSET;
                 
                 
 
