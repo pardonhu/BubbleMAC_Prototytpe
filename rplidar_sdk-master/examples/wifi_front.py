@@ -44,6 +44,7 @@ from gnuradio.qtgui import Range, RangeWidget
 from wifi_phy_hier import wifi_phy_hier  # grc-generated hier_block
 import foo
 import ieee802_11
+import argparse
 
 from multi_threads import communicate, GPS
 import os
@@ -683,7 +684,7 @@ def packet_transmit(tb):
         print(f'transmit exception: {e}')
         packet_log.close()
         
-def main(top_block_cls=wifi_trx, options=None):
+def main(args, top_block_cls=wifi_trx, options=None):
     #Appply GPS utc time to set system clock
     gps_serial_path, stm_serial_path ='/dev/a-gps', '/dev/a-stm'
     # set_clock(gps_serial_path)
@@ -695,7 +696,7 @@ def main(top_block_cls=wifi_trx, options=None):
 
     
     ser_stm,ret_stm=communicate.DOpenPort(stm_serial_path,115200,None)
-    communicate.ReadPcap(ser_stm, role='front', wifi_path=wifi_path)
+    communicate.ReadPcap(ser_stm, args, wifi_path=wifi_path)
     
 
     tb = top_block_cls()
@@ -731,4 +732,13 @@ def main(top_block_cls=wifi_trx, options=None):
         pass
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='bubble exp')
+    parser.add_argument('--role', type=str, default='front')
+    parser.add_argument('--gear', type=int, default=0)
+    parser.add_argument('--auto_stop', type=int, default=0)
+    parser.add_argument('--RO', type=float, default=1.0)
+    # parser.add_argument('--autostop', type=int, default=0)
+    args = parser.parse_args()
+    
+    print(args)
+    main(args)

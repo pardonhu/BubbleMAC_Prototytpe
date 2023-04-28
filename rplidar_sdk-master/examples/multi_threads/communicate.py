@@ -12,8 +12,6 @@ BOOL=True  #读取标志位
 MAX_SPEED = 6.0
 ACC = 1
 DEC = 0.2
-DEC_RO = 1  
-origin_op = 1
 vel_max = [200, 300, 400, 500]
 DELTA_TIME = 0.1
 TAO = 1
@@ -31,13 +29,13 @@ home_dir = os.environ['HOME']
 vel_log = open(f'{home_dir}/Desktop/memory_file_sys/vel_log/{cur_time}.txt', 'w')
 stm_log = open(f'{home_dir}/Desktop/memory_file_sys/stm_log/{cur_time}.txt', 'w')
 
-def get_vel(vel_l, dist):
+def get_vel(vel_l, dist, args):
     # dist /= 1000
     dist = max(dist - 0.5, 0.0)
     vel_f = vel_cur
     vel_l = min(max(vel_l, 0), 3)
-    v3 = -DEC*DEC_RO*(TAO+DELTA_TIME) + math.sqrt((DEC*DEC_RO*(TAO+DELTA_TIME))**2\
-            + DEC_RO*vel_l**2 + 2*DEC*DEC_RO*dist)
+    v3 = -DEC*args.RO*(TAO+DELTA_TIME) + math.sqrt((DEC*args.RO*(TAO+DELTA_TIME))**2\
+            + args.RO*vel_l**2 + 2*DEC*args.RO*dist)
     vel_new = min(MAX_SPEED, vel_f + ACC * DELTA_TIME, v3)
     # if vel_new < 0.1:
     #     vel_new = 0
@@ -59,9 +57,8 @@ def pwm_to_vel(pwm):
     return max(ret, 0)
     
 
-def vel_to_pwm(pwm):
-    global origin_op
-    return min(pwm / 0.9 * 200 + 100, vel_max[origin_op])
+def vel_to_pwm(pwm, args):
+    return min(pwm / 0.9 * 200 + 100, vel_max[args.gear])
 
 #读数代码本体实现
 def ReadData(ser):
@@ -183,13 +180,13 @@ def DReadPort():
 import os
 home_dir = os.environ['HOME']
 
-def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file_sys/wifi_log/{cur_time}.pcap', \
+def read_latest_packet(ser_stm, args, wifi_path=f'{home_dir}/Desktop/memory_file_sys/wifi_log/{cur_time}.pcap', \
                        lidar_path = f'{home_dir}/Desktop/memory_file_sys/lidar_data.txt', packet_len=50):
-    global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag, tx_dist, origin_op
+    global front_dist, vel_cur, prev_seq_num, cur_seq_num, rel_dist, vel_leader, received_num, queue_flag, tx_dist
     missed_packet_num = 0
     continuous_receive_num = 0
-    count=DWritePort(ser_stm, f'a{origin_op}'.encode('gbk'))
-    print(f"dist:{front_dist}  向STM32 写入 {origin_op} ")
+    count=DWritePort(ser_stm, f'a{args.gear}'.encode('gbk'))
+    print(f"dist:{front_dist}  向STM32 写入 {args.gear} ")
     while(1):
         packet_flag = False
         # print('---begin reading lidar---')
@@ -242,7 +239,7 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
         
         if(packet_flag or True):
             # print('---making decision---')
-            if role == 'rear':
+            if args.role == 'rear':
                 
                 # print(comm_radius)
                 # if (packet_flag == True):
@@ -250,10 +247,10 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                 # front_dist = rel_dist
                 tx_dist = front_dist
                 comm_radius = get_comm_radius(front_dist)
-                vel_new = get_vel(vel_leader, front_dist) # get vel_l by communication
+                vel_new = get_vel(vel_leader, front_dist, args) # get vel_l by communication
                 # vel_new = get_vel(vel_ralative + vel_cur, front_dist) # get vel_l by lidar
                 # print(vel_new)
-                pwm_vel = vel_to_pwm(vel_new)
+                pwm_vel = vel_to_pwm(vel_new, args)
                 # print(pwm_vel)
                 if brake_flag == 1:
                 # if True:
@@ -271,20 +268,20 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                     input = 'b'.encode('gbk')+V+xor_check.to_bytes(1, 'big')
                     count=DWritePort(ser_stm, input)
                     # count=DWritePort(ser_stm,'C')
-                    # count=DWritePort(ser_stm, f'a{origin_op}'.encode('gbk'))
+                    # count=DWritePort(ser_stm, f'a{args.gear}'.encode('gbk'))
                     stm_log.write(f"dist:{front_dist}  向STM32 写入 pwm_vel{pwm_vel}, {input.hex()}\n")
                     print(f"dist:{front_dist}  向STM32 写入 pwm_vel {pwm_vel}, count={count} ")
                 # print('---end reading lidar---')
                 else:
-                    input = f'a{origin_op}'.encode('gbk')
+                    input = f'a{args.gear}'.encode('gbk')
                     count=DWritePort(ser_stm, input)
-                    stm_log.write(f"dist:{front_dist}  向STM32 写入 a{origin_op}, {input.hex()}\n")
-                    print(f"dist:{front_dist}  向STM32 写入 a{origin_op} ")
+                    stm_log.write(f"dist:{front_dist}  向STM32 写入 a{args.gear}, {input.hex()}\n")
+                    print(f"dist:{front_dist}  向STM32 写入 a{args.gear} ")
             else:
                 comm_radius = get_comm_radius(rel_dist)
                 tx_dist = rel_dist
                 # print(comm_radius)
-                vel_new = get_vel(vel_leader, front_dist) # get vel_l by communication
+                vel_new = get_vel(vel_leader, front_dist, args) # get vel_l by communication
                 # vel_new = get_vel(vel_ralative + vel_cur, front_dist) # get vel_l by lidar
                 # print(vel_new)
                 # pwm_vel = vel_to_pwm(vel_new)
@@ -297,19 +294,19 @@ def read_latest_packet(ser_stm, role, wifi_path=f'{home_dir}/Desktop/memory_file
                     print(f"dist:{front_dist}  向STM32 写入 brake , input={input.hex()} ")
                     stm_log.write(f"dist:{front_dist}  向STM32 写入 brake, {input.hex()}\n")
                 else:
-                    if role == 'lane':
-                        op = 'a' + str(origin_op)
+                    if args.auto_stop == 0:
+                        op = 'a' + str(args.gear)
                     else:
-                        op = 'a' + str(origin_op)
+                        op = 'f'
                     countc=DWritePort(ser_stm, op)
                     print(f" 向STM32 写入 {op}")
                     stm_log.write(f" 向STM32 写入 {op} {op.encode('gbk').hex()}\n")
         stm_log.flush()
         time.sleep(0.05)
 
-def ReadPcap(ser_stm, role, wifi_path):
+def ReadPcap(ser_stm, args, wifi_path):
     try:
-        threading.Thread(target=read_latest_packet, args=(ser_stm, role, wifi_path, )).start()
+        threading.Thread(target=read_latest_packet, args=(ser_stm, args, wifi_path, )).start()
     except Exception as e:
         print("---异常---: ", e)
 
@@ -334,3 +331,4 @@ def main(gps_serial_path = "COM2", stm_serial_path = "COM5"):
 if __name__=="__main__":
     
     main()
+    

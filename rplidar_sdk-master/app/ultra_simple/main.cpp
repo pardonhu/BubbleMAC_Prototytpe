@@ -60,7 +60,7 @@ static inline void delay(sl_word_size_t ms){
 
 using namespace sl;
 using namespace std;
-#define LIMIT_DIST 500
+#define LIMIT_DIST 700
 #define BRAKE_DIST 500
 
 #define MAX_ANG 2000
