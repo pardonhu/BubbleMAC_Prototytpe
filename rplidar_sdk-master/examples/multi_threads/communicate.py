@@ -243,7 +243,8 @@ def read_latest_packet(ser_stm, args, wifi_path=f'{home_dir}/Desktop/memory_file
                 
                 # print(comm_radius)
                 # if (packet_flag == True):
-                vel_leader = vel_ralative + vel_cur
+                # vel_leader = vel_ralative + vel_cur
+                vel_leader = pwm_to_vel(200)
                 # front_dist = rel_dist
                 tx_dist = front_dist
                 comm_radius = get_comm_radius(front_dist)
