@@ -66,7 +66,7 @@ using namespace std;
 #define MAX_ANG 2000
 #define WINDOW_SIZE 30
 #define MAX_DATA_POINTS 1000
-
+#define ST_COE 4
 #define AMBIGUITY_TH 1.8
 
 double error = 0.0;     // 偏差值
@@ -97,9 +97,9 @@ double get_vel_relative(double front_dist, double ratio=0.1){
 
 double PID_control(double target_dist, double v = 100){
     // PID控制器参数
-    double Kp = 10; //0.3;
+    double Kp = 100; //0.3;
     double Ki = 0;
-    double Kd = 20; //3;
+    double Kd = 100; //3;
 
     // 车辆状态变量
     
@@ -449,18 +449,18 @@ int main(int argc, const char * argv[]) {
                 target_dist /= target_cnt;
                 
                 
-                logfile << "history_size: " << history_dist.size() <<  " window_size:" <<  WINDOW_SIZE << std::endl;
-                if (history_dist.size() >= 1){
-                    double his_avg = std::accumulate(history_dist.begin(), history_dist.end(), 0.0) / history_dist.size();
-                    logfile << "Before avg: " << target_dist <<  " his_avg" << his_avg<< std::endl;
-                    if (abs(target_dist - LIMIT_DIST) >= 200){
-                        if (target_dist > AMBIGUITY_TH * his_avg) logfile << "foo!" << std::endl;
-                        target_dist = (target_dist > AMBIGUITY_TH * his_avg)?
-                            his_avg : target_dist; // 默认window size为10
-                    }
-                }
-                history_dist.emplace_back(target_dist);
-                output = -PID_control(target_dist) / 2;
+                // logfile << "history_size: " << history_dist.size() <<  " window_size:" <<  WINDOW_SIZE << std::endl;
+                // if (history_dist.size() >= 1){
+                //     double his_avg = std::accumulate(history_dist.begin(), history_dist.end(), 0.0) / history_dist.size();
+                //     logfile << "Before avg: " << target_dist <<  " his_avg" << his_avg<< std::endl;
+                //     if (abs(target_dist - LIMIT_DIST) >= 200){
+                //         if (target_dist > AMBIGUITY_TH * his_avg) logfile << "foo!" << std::endl;
+                //         target_dist = (target_dist > AMBIGUITY_TH * his_avg)?
+                //             his_avg : target_dist; // 默认window size为10
+                //     }
+                // }
+                // history_dist.emplace_back(target_dist);
+                output = -PID_control(target_dist) / ST_COE;
                 
                 
 
